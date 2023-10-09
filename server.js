@@ -5,6 +5,14 @@ const socketIo = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+const basicAuth = require('express-basic-auth');
+
+// Add Basic Authentication
+app.use(basicAuth({
+    users: { 'patron': 'itsme' },
+    challenge: true,
+    realm: 'Enter password to access the Virtual Coffee Shop'
+}));
 
 const PORT = process.env.PORT || 3000;
 const USER_LIMIT = 20;

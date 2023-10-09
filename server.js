@@ -7,7 +7,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 const PORT = process.env.PORT || 3000;
-const USER_LIMIT = 5;
+const USER_LIMIT = 20;
 
 app.use(express.static('public'));  // Serve static files from the 'public' directory
 

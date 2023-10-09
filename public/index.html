@@ -3,17 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webcam App</title>
+    <title>Coffee Shop Vibes</title>
     <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f1ea;
+            color: #5d473a;
+            text-align: center;
+            padding: 2em 0;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 0.2em;
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        #feeds-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1em;
+        }
+
         .webcam-feed {
+            border: 5px solid #8e735b;
+            border-radius: 8px;
             width: 160px;
             height: 120px;
-            border: 1px solid black;
-            margin: 5px;
+            box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+        }
+
+        /* Optional: Add a subtle coffee cup watermark in the background */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 2v2h18V2H3zm18 4v12a4 4 0 01-4 4H7a4 4 0 01-4-4V6h18zM7 14h10v2H7v-2zm0-4h10v2H7v-2z" fill="%23958b76"/></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 8%;
+            opacity: 0.05;
+            z-index: -1;
         }
     </style>
 </head>
+
 <body>
+    <h1>Welcome to the Virtual Coffee Shop</h1>
     <video id="webcam" width="160" height="120" style="display:none;" autoplay></video>
     <div id="feedsContainer"></div>
 
@@ -29,6 +71,20 @@
             socket.disconnect();
         });
 
+        let subscribed = false;
+        const subcribeToImageData = () => {
+            // Update image when a new one is received
+            socket.on('update-image', (data) => {
+                if (!feeds[data.id]) {
+                    const newImage = document.createElement('img');
+                    newImage.className = 'webcam-feed';
+                    feedsContainer.appendChild(newImage);
+                    feeds[data.id] = newImage;
+                }
+                feeds[data.id].src = data.image;
+            });
+            subscribed = false;
+        };
 
         // Access webcam
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -45,21 +101,18 @@
                     const imageData = canvas.toDataURL('image/jpeg');
                     socket.emit('image', imageData);
                 }, 1000);
+            
+                if (!subscribed) {
+                    subcribeToImageData();
+                }
+                
+            
             })
             .catch((err) => {
                 console.error('Error accessing webcam:', err);
             });
 
-        // Update image when a new one is received
-        socket.on('update-image', (data) => {
-            if (!feeds[data.id]) {
-                const newImage = document.createElement('img');
-                newImage.className = 'webcam-feed';
-                feedsContainer.appendChild(newImage);
-                feeds[data.id] = newImage;
-            }
-            feeds[data.id].src = data.image;
-        });
+        
 
         // Remove feed when a user disconnects
         socket.on('user-disconnected', (id) => {

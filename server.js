@@ -28,7 +28,7 @@ io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
     socket.on('image', (data) => {
-        socket.broadcast.emit('update-image', { id: socket.id, image: data });
+        io.emit('update-image', { id: socket.id, image: data });
     });
 
     socket.on('disconnect', () => {

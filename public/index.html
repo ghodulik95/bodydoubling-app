@@ -23,6 +23,12 @@
         const feedsContainer = document.getElementById('feedsContainer');
         const feeds = {}; // To keep track of image elements for each user
         const socket = io();
+        
+        socket.on('server-full', () => {
+            alert('The server is currently full. Please try again later.');
+            socket.disconnect();
+        });
+
 
         // Access webcam
         navigator.mediaDevices.getUserMedia({ video: true })

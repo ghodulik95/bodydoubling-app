@@ -7,6 +7,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 const PORT = process.env.PORT || 3000;
+const USER_LIMIT = 5;
 
 app.use(express.static('public'));  // Serve static files from the 'public' directory
 
@@ -16,6 +17,14 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
+    if (io.engine.clientsCount > USER_LIMIT) {
+        socket.emit('server-full');
+        socket.disconnect();
+        console.log('Disconnected a user due to server limit reached.');
+        return;
+    }
+
+    
     console.log('User connected:', socket.id);
 
     socket.on('image', (data) => {

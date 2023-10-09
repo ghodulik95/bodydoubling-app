@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam App</title>
+    <style>
+        .webcam-feed {
+            width: 160px;
+            height: 120px;
+            border: 1px solid black;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <video id="webcam" width="160" height="120" autoplay></video>
+    <div id="feedsContainer"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const webcam = document.getElementById('webcam');
+        const feedsContainer = document.getElementById('feedsContainer');
+        const feeds = {}; // To keep track of image elements for each user
+        const socket = io();
+
+        // Access webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                webcam.srcObject = stream;
+
+                // Capture image every second
+                setInterval(() => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 160;
+                    canvas.height = 120;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+                    const imageData = canvas.toDataURL('image/jpeg');
+                    socket.emit('image', imageData);
+                }, 1000);
+            })
+            .catch((err) => {
+                console.error('Error accessing webcam:', err);
+            });
+
+        // Update image when a new one is received
+        socket.on('update-image', (data) => {
+            if (!feeds[data.id]) {
+                const newImage = document.createElement('img');
+                newImage.className = 'webcam-feed';
+                feedsContainer.appendChild(newImage);
+                feeds[data.id] = newImage;
+            }
+            feeds[data.id].src = data.image;
+        });
+
+        // Remove feed when a user disconnects
+        socket.on('user-disconnected', (id) => {
+            if (feeds[id]) {
+                feedsContainer.removeChild(feeds[id]);
+                delete feeds[id];
+            }
+        });
+    </script>
+</body>
+</html>

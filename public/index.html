@@ -57,6 +57,8 @@
 <body>
     <h1>Welcome to the Virtual Coffee Shop</h1>
     <video id="webcam" width="160" height="120" style="display:none;" autoplay></video>
+    <button id="coffeeButton">Get some coffee</button>
+    <img id="coffeeImage" src="coffeecup.png" style="display: none;">
     <div id="feedsContainer"></div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -65,6 +67,11 @@
         const feedsContainer = document.getElementById('feedsContainer');
         const feeds = {}; // To keep track of image elements for each user
         const socket = io();
+        
+        let coffeeActive = false;
+        const coffeeDuration = 1 * 60 * 1000; // 5 minutes in milliseconds
+        let coffeeTimeout;
+
         
         socket.on('server-full', () => {
             alert('The server is currently full. Please try again later.');
@@ -98,6 +105,12 @@
                     canvas.height = 120;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+                    
+                    if (coffeeActive) {
+                        const coffeeElem = document.getElementById('coffeeImage');
+                        ctx.drawImage(coffeeElem, 10, 80, 29, 40); // Adjust position and size as needed
+                    }
+                    
                     const imageData = canvas.toDataURL('image/jpeg');
                     socket.emit('image', imageData);
                 }, 1000);
@@ -121,6 +134,21 @@
                 delete feeds[id];
             }
         });
+        
+        document.getElementById('coffeeButton').addEventListener('click', () => {
+            coffeeActive = true;
+
+            // If there's an existing timeout (i.e., the user clicked the button before the previous coffee expired), clear it
+            if (coffeeTimeout) {
+                clearTimeout(coffeeTimeout);
+            }
+
+            // Set a timeout to "expire" the coffee cup after 5 minutes
+            coffeeTimeout = setTimeout(() => {
+                coffeeActive = false;
+            }, coffeeDuration);
+        });
+
     </script>
 </body>
 </html>
